@@ -1,0 +1,29 @@
+{
+  "name": "ekvi",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "pnpm run --parallel dev",
+    "dev:web": "pnpm --filter web dev",
+    "dev:convex": "npx convex dev",
+    "build": "pnpm run --recursive build",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "type-check": "pnpm run --recursive type-check"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "ultracite": "latest",
+    "@biomejs/biome": "2.1.2"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.14.0"
+}
+
+
+
+
