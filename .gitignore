@@ -11,3 +11,5 @@ coverage/
 .vscode/
 !.vscode/settings.json
 !.vscode/extensions.json
+.env*.local
+.env.production

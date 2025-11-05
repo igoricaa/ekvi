@@ -8,22 +8,17 @@
     "dev:web": "pnpm --filter web dev",
     "dev:convex": "npx convex dev",
     "build": "pnpm run --recursive build",
-    "lint": "biome check .",
-    "lint:fix": "biome check --write .",
-    "format": "biome format --write .",
+    "check": "npx ultracite@latest check",
+    "fix": "npx ultracite@latest fix",
     "type-check": "pnpm run --recursive type-check"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.3.3",
     "typescript": "^5.3.0",
-    "ultracite": "latest",
-    "@biomejs/biome": "2.1.2"
+    "ultracite": "latest"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.14.0"
 }
-
-
-
-
