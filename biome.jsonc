@@ -16,7 +16,8 @@
         "noExplicitAny": "off"
       },
       "performance": {
-        "noNamespaceImport": "off"
+        "noNamespaceImport": "off",
+        "noImgElement": "off"
       },
       "correctness": {
         "useExhaustiveDependencies": "info"

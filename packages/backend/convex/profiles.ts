@@ -97,6 +97,21 @@ export const createProfile = mutation({
   },
 });
 
+// Generate upload URL for avatar images
+export const generateUploadUrl = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const authUser = await authComponent.getAuthUser(ctx);
+
+    // Verify user is authenticated
+    if (!authUser) {
+      throw new Error("Not authenticated");
+    }
+
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
 // Update profile
 export const updateProfile = mutation({
   args: {
@@ -150,6 +165,24 @@ export const getUserByProfileId = query({
         email: authUser.email, // Consider hiding in production
       },
     };
+  },
+});
+
+export const deleteCurrentUserProfile = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const authUser = await authComponent.getAuthUser(ctx);
+
+    const profile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_auth", (q) => q.eq("authId", authUser._id))
+      .first();
+
+    if (profile) {
+      await ctx.db.delete(profile._id);
+    }
+
+    return { success: true };
   },
 });
 

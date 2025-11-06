@@ -1,5 +1,6 @@
 import { api } from "@convex/_generated/api";
 import { preloadQuery } from "convex/nextjs";
+import Link from "next/link";
 import {
   AppContainer,
   AppHeader,
@@ -9,7 +10,6 @@ import {
 } from "@/components/server";
 import { getToken } from "@/lib/auth-server";
 import { SignOut, UserProfile } from "./client";
-import Link from "next/link";
 
 const Header = async () => {
   const token = await getToken();

@@ -8,8 +8,6 @@ export const UserProfile = ({
 }: {
   user?: { name: string; image?: string | null; email: string } | null; // TODO: use preloadedUserQuery instead
 }) => {
-
-
   return (
     <div className="flex items-center space-x-2">
       {user?.image ? (

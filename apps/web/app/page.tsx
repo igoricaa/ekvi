@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { useEffect } from "react";
 
 export default function Home() {
-  const { isAuthenticated, isLoading } = useConvexAuth();
+  const { isAuthenticated } = useConvexAuth();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -13,7 +13,7 @@ export default function Home() {
     } else {
       redirect("/sign-in");
     }
-  }, [isAuthenticated, isLoading]);
+  }, [isAuthenticated]);
 
   return null;
 }

@@ -1,7 +1,6 @@
 import { createClient, type GenericCtx } from "@convex-dev/better-auth";
 import { convex } from "@convex-dev/better-auth/plugins";
 import { betterAuth } from "better-auth";
-import { anonymous } from "better-auth/plugins";
 import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
 import authSchema from "./betterAuth/schema";
@@ -36,6 +35,9 @@ export const createAuth = (
       requireEmailVerification: false,
     },
     user: {
+      deleteUser: {
+        enabled: true,
+      },
       additionalFields: {
         hasCompletedOnboarding: {
           type: "boolean",
@@ -57,7 +59,6 @@ export const createAuth = (
       },
     },
     plugins: [
-      anonymous(),
       //   magicLink({
       //     sendMagicLink: async ({ email, url }) => {
       //       await sendMagicLink(requireActionCtx(ctx), {

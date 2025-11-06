@@ -1,12 +1,12 @@
 "use client";
 
-import { authClient } from "@/lib/auth-client";
 import { api } from "@convex/_generated/api";
 import { Preloaded, useConvexAuth, usePreloadedQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { UserProfile as UserProfileComponent } from "@/components/server";
 import { SignOutButton } from "@/components/client";
+import { UserProfile as UserProfileComponent } from "@/components/server";
+import { authClient } from "@/lib/auth-client";
 
 export function SignOut() {
   const router = useRouter();
