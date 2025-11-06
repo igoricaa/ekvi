@@ -1,16 +1,19 @@
 "use client";
 
-import { useQuery } from "convex/react";
-import { api } from "../../../packages/backend/convex/_generated/api";
+import { useConvexAuth } from "convex/react";
+import { redirect } from "next/navigation";
+import { useEffect } from "react";
 
 export default function Home() {
-  const users = useQuery(api.users.list);
+  const { isAuthenticated, isLoading } = useConvexAuth();
 
-  return (
-    <main className="p-8">
-      <h1 className="font-bold text-4xl">EKVI</h1>
+  useEffect(() => {
+    if (isAuthenticated) {
+      redirect("/dashboard/server");
+    } else {
+      redirect("/sign-in");
+    }
+  }, [isAuthenticated, isLoading]);
 
-      <p>Users: {users?.length ?? 0}</p>
-    </main>
-  );
+  return null;
 }

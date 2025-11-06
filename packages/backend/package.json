@@ -8,10 +8,10 @@
     "deploy": "convex deploy"
   },
   "dependencies": {
-    "convex": "^1.28.0"
+    "convex": "^1.28.2"
   },
   "devDependencies": {
-    "typescript": "^5.3.0"
+    "typescript": "^5.9.3"
   },
   "author": "",
   "license": "ISC",
