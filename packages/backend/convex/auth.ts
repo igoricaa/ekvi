@@ -49,13 +49,13 @@ export const createAuth = (
         },
       },
     },
-    // socialProviders: {
-    //     google: {
-    //       clientId: process.env.GOOGLE_CLIENT_ID ?? "",
-    //       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
-    //       enabled: !!process.env.GOOGLE_CLIENT_ID,
-    //     },
-    //   },
+    socialProviders: {
+      google: {
+        clientId: process.env.GOOGLE_CLIENT_ID ?? "",
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
+        enabled: !!process.env.GOOGLE_CLIENT_ID,
+      },
+    },
     plugins: [
       anonymous(),
       //   magicLink({
