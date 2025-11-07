@@ -6,14 +6,14 @@
 
 ## Architecture
 
-**Decision:** Local Better Auth installation with hybrid schema.
+### Decision: Local Better Auth + Hybrid Schema
 
-**Why Local (not cloud):**
+**Local (not cloud):**
 - Full schema control via `betterAuth/schema.ts`
-- Can add custom indexes to auth tables
-- Schema changes regenerate with CLI (not automatic)
+- Custom indexes on auth tables
+- Schema changes via CLI regeneration
 
-**Why Hybrid Schema (separate profiles):**
+**Hybrid Schema (separate profiles):**
 - **Better Auth tables** (`user`, `session`, etc.): Auth-essential fields only
   - `hasCompletedOnboarding` - gates auth flow
   - `accountStatus` - auth-level suspension
@@ -21,28 +21,23 @@
   - `displayName`, `bio`, `avatarUrl`, `role`, `location`, `timezone`
 
 **Benefits:**
-- Schema stability (no regeneration conflicts for business fields)
-- Custom indexes optimized for app queries (by_role, by_location)
-- Easy future extensions (certifications table, multi-role, analytics)
-- Clean separation (auth vs domain concerns)
+- Schema stability (no regeneration conflicts)
+- Custom app indexes (by_role, by_location)
+- Easy extensions (certifications, multi-role, analytics)
+- Clean separation of concerns
 
 ---
 
 ## Schema
 
-### Better Auth Tables (Auto-Generated)
-Located in `packages/backend/convex/betterAuth/schema.ts`:
+### Better Auth Tables
+Located in `packages/backend/convex/betterAuth/schema.ts` (auto-generated):
 
-```typescript
-user: {
-  _id, email, emailVerified, name, image, createdAt, updatedAt,
-  hasCompletedOnboarding,  // Custom: gates onboarding flow
-  accountStatus,           // Custom: "active" | "suspended"
-}
-session: { expiresAt, token, userId, ipAddress, userAgent }
-account: { accountId, providerId, userId, accessToken, refreshToken, password }
-verification: { identifier, value, expiresAt }
-jwks: { publicKey, privateKey, createdAt }
+```
+user: _id, email, name, hasCompletedOnboarding, accountStatus
+session: token, userId, expiresAt, ipAddress, userAgent
+account: providerId, userId, accessToken, password
+verification: identifier, value, expiresAt
 ```
 
 ### App Schema
@@ -50,11 +45,11 @@ Located in `packages/backend/convex/schema.ts`:
 
 ```typescript
 userProfiles: {
-  authId: string,           // References user._id
+  authId: string,              // References user._id
   displayName: string,
+  role: "athlete" | "coach" | "admin",
   bio?: string,
   avatarUrl?: string,
-  role: "athlete" | "coach" | "admin",
   location?: string,
   timezone?: string,
   createdAt: number,
@@ -70,42 +65,44 @@ userProfiles: {
 ```
 packages/backend/convex/
 ├── betterAuth/               # Local Better Auth component
-│   ├── _generated/          # Auto-generated types
-│   ├── auth.ts              # Static auth export for CLI
-│   ├── schema.ts            # Auto-generated Better Auth tables
+│   ├── schema.ts            # Auto-generated auth tables
 │   ├── adapter.ts           # Database CRUD API
-│   └── convex.config.ts     # Component config
-├── _generated/              # Convex types
-│   └── api.d.ts            # Includes Better Auth component types
-├── auth.ts                  # Better Auth config (createAuth, authComponent)
+│   └── auth.ts              # Static export for CLI
+├── auth.ts                  # Better Auth config (createAuth, component)
 ├── auth.config.ts           # Convex auth provider config
-├── convex.config.ts         # App config with Better Auth component
 ├── http.ts                  # HTTP routes for Better Auth
 ├── schema.ts                # App schema (userProfiles)
-├── profiles.ts              # Profile CRUD operations
-└── users.ts                 # Auth-only operations (sessions, password)
+├── profiles.ts              # Profile CRUD + getCurrentUser
+└── users.ts                 # Auth-only operations
 
 apps/web/
 ├── app/
-│   ├── (auth)/              # Authenticated routes
-│   ├── (unauth)/            # Sign-in, Sign-up pages
-│   ├── api/auth/[...all]/   # Better Auth API handler
-│   └── layout.tsx           # Root layout with providers
+│   ├── (auth)/              # Protected routes
+│   │   ├── onboarding/      # Role selection + profile creation
+│   │   ├── settings/        # Profile edit + delete account
+│   │   └── dashboard/
+│   ├── (unauth)/            # Public auth pages
+│   │   ├── sign-in/
+│   │   ├── sign-up/
+│   │   ├── reset-password/
+│   │   └── verify-2fa/
+│   └── api/auth/[...all]/   # Better Auth API handler
 ├── lib/
 │   ├── auth-client.ts       # Client-side Better Auth
-│   └── auth-server.ts       # Server-side token getter
-└── components/
-    └── providers/
-        └── convex-client-provider.tsx  # Convex + Better Auth provider
+│   └── validations/auth.ts  # Zod schemas
+├── components/providers/
+│   └── convex-client-provider.tsx
+└── proxy.ts                 # Next.js 16 middleware
 ```
 
 ---
 
 ## Key Patterns
 
-### Join Auth + Profile
+### 1. Join Auth + Profile
+**✅ Good:** Single query joining both
 ```typescript
-// ✅ GOOD - Single query joining both
+// profiles.ts:7-49
 export const getCurrentUser = query({
   handler: async (ctx) => {
     const authUser = await authComponent.getAuthUser(ctx);
@@ -113,101 +110,145 @@ export const getCurrentUser = query({
       .query("userProfiles")
       .withIndex("by_auth", q => q.eq("authId", authUser._id))
       .first();
-
     return { authUser, profile };
   },
 });
-
-// ❌ BAD - Multiple queries from client
-const authUser = useQuery(api.users.getAuthUser);
-const profile = useQuery(api.profiles.getProfile, { authId: authUser?._id });
 ```
 
-### Auth Methods (Null Safety)
+**❌ Bad:** Multiple queries from client (waterfalls)
+
+### 2. Auth Methods (Null Safety)
 ```typescript
-// Throws if not authenticated - use in protected queries/mutations
-const authUser = await authComponent.getAuthUser(ctx);
+// Throws if not authenticated - use in protected mutations/queries
+await authComponent.getAuthUser(ctx);
 
-// Returns null if not authenticated - use for optional auth
-const authUser = await authComponent.safeGetAuthUser(ctx);
-if (!authUser) return null;
+// Returns null - use for optional auth
+await authComponent.safeGetAuthUser(ctx);
 
-// Returns null if user doesn't exist - use for lookups
-const authUser = await authComponent.getAnyUserById(ctx, userId);
-if (!authUser) return null;  // User deleted
+// Returns null if deleted - use for lookups
+await authComponent.getAnyUserById(ctx, userId);
 ```
 
-### Update Patterns
+### 3. Update Patterns
 ```typescript
-// ✅ Update Better Auth table
+// ✅ Better Auth table: Use adapter.updateOne
 await ctx.runMutation(components.betterAuth.adapter.updateOne, {
   input: {
     model: "user",
     where: [{ field: "_id", value: userId }],
-    update: { hasCompletedOnboarding: true, accountStatus: "suspended" },
+    update: { hasCompletedOnboarding: true },
   },
 });
 
-// ✅ Update userProfiles table
-await ctx.db.patch(profileId, {
-  displayName: "New Name",
-  updatedAt: Date.now(),
-});
+// ✅ App table: Use ctx.db.patch
+await ctx.db.patch(profileId, { displayName: "New Name" });
 ```
 
-### Role-Based Access Control
+### 4. Role-Based Access Control
+Pattern: Create helper function in profiles.ts
 ```typescript
-// Helper for role checks
 const requireRole = async (ctx, role: "admin" | "coach") => {
-  const authUser = await authComponent.getAuthUser(ctx);
-  const profile = await ctx.db
-    .query("userProfiles")
-    .withIndex("by_auth", q => q.eq("authId", authUser._id))
-    .first();
-
-  if (!profile || profile.role !== role) {
-    throw new Error(`${role} access required`);
-  }
+  const { authUser, profile } = await getCurrentUser(ctx);
+  if (profile.role !== role) throw new Error("Unauthorized");
   return { authUser, profile };
 };
+```
 
-// Usage
-export const adminOnlyMutation = mutation({
-  handler: async (ctx, args) => {
-    await requireRole(ctx, "admin");
-    // ... admin logic
-  },
-});
+---
+
+## Common Gotchas
+
+### 1. Orphaned Profiles
+Profile exists but auth user deleted:
+```typescript
+const authUser = await authComponent.getAnyUserById(ctx, profile.authId);
+if (!authUser) return null;  // Handle gracefully
+```
+
+### 2. Onboarding Flow
+```
+1. Sign up → auth record created (hasCompletedOnboarding: false)
+2. Onboarding page → create profile + set hasCompletedOnboarding: true
+3. Middleware → check session exists
+4. App pages → check both auth + profile exist
+```
+
+### 3. Delete Account Pattern
+**Challenge:** Prevent "Unauthenticated" error during deletion
+
+**Solution:** Skip query when deleting
+```typescript
+const [isDeleting, setIsDeleting] = useState(false);
+
+const currentUser = useQuery(
+  api.profiles.getCurrentUser,
+  isDeleting ? "skip" : {}  // Prevents error
+);
+
+const handleDelete = async () => {
+  setIsDeleting(true);
+  await deleteProfile();      // Delete Convex data first
+  await authClient.deleteUser();  // Deletes auth + signs out
+  window.location.href = "/sign-in";  // Hard redirect
+};
+```
+
+**Why:** `deleteUser()` invalidates session → query would fail → skip prevents error
+
+### 4. Async Without Await
+```typescript
+// ❌ Unnecessary async
+handler: async (ctx) => authComponent.getAuthUser(ctx)
+
+// ✅ Remove async (already returns Promise)
+handler: (ctx) => authComponent.getAuthUser(ctx)
 ```
 
 ---
 
 ## Schema Regeneration
 
-**When to regenerate:** After changing `additionalFields` in `auth.ts`.
+**When:** After changing `additionalFields` in auth.ts
 
 ```bash
-# 1. Navigate to Better Auth directory
 cd packages/backend/convex/betterAuth
-
-# 2. Run Better Auth CLI
 npx @better-auth/cli generate -y
-
-# 3. Restart Convex dev server (picks up new schema)
 cd ../../../
-pnpm dev:convex
-
-# 4. Verify types updated
-# Check: packages/backend/convex/betterAuth/schema.ts
+pnpm dev:convex  # Restart to pick up changes
 ```
 
-**What gets regenerated:**
-- `betterAuth/schema.ts` - All Better Auth tables with your custom fields
-- `_generated/api.d.ts` - Type definitions for auth component
+**What regenerates:**
+- `betterAuth/schema.ts` - All auth tables with custom fields
+- `_generated/api.d.ts` - Type definitions
 
-**What stays the same:**
-- `schema.ts` (userProfiles) - Never touched by Better Auth CLI
-- Your app logic in `profiles.ts`, `users.ts`
+**What stays same:**
+- `schema.ts` (userProfiles)
+- Your app logic (profiles.ts, users.ts)
+
+---
+
+## OAuth Setup (Google)
+
+### Backend
+See `auth.ts:socialProviders` - enables Google if env vars set
+
+### Environment Variables
+```bash
+# Backend
+npx convex env set GOOGLE_CLIENT_ID your-id
+npx convex env set GOOGLE_CLIENT_SECRET your-secret
+
+# Frontend .env.local
+GOOGLE_CLIENT_ID=your-id
+GOOGLE_CLIENT_SECRET=your-secret
+```
+
+### Frontend Usage
+```typescript
+await authClient.signIn.social({ provider: "google" });
+```
+
+Callback handled automatically at `/api/auth/callback/google`
 
 ---
 
@@ -215,103 +256,33 @@ pnpm dev:convex
 
 ### Backend (Convex)
 ```bash
-# Generate and set auth secret
-npx convex env set BETTER_AUTH_SECRET=$(openssl rand -base64 32)
-
-# Set site URL
-npx convex env set SITE_URL=http://localhost:3001
+npx convex env set BETTER_AUTH_SECRET $(openssl rand -base64 32)
+npx convex env set SITE_URL http://localhost:3001
 ```
 
 ### Frontend (.env.local)
 ```env
-# Convex URLs
 NEXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
 NEXT_PUBLIC_CONVEX_SITE_URL=https://your-deployment.convex.site
-
-# Local site URL (for Better Auth redirects)
 SITE_URL=http://localhost:3001
 ```
 
-**Important:**
-- `CONVEX_SITE_URL` is auto-managed by Convex - DO NOT set manually
-- For self-hosted: site URL is typically one port higher (e.g., :3211 vs :3210)
+**Important:** `CONVEX_SITE_URL` auto-managed by Convex - don't set manually
 
 ---
 
-## Implementation Notes
+## Implementation References
 
-### Component Setup (auth.ts)
-```typescript
-// Import local schema for type safety
-import authSchema from "./betterAuth/schema";
+### Component Setup
+- Config: `auth.ts` - createAuth with local schema
+- Routes: `http.ts` - authComponent.registerRoutes
+- Provider: `convex-client-provider.tsx` - ConvexBetterAuthProvider
 
-// Create client with local schema
-export const authComponent = createClient<DataModel, typeof authSchema>(
-  components.betterAuth,
-  { local: { schema: authSchema } }
-);
-```
-
-### HTTP Routes (http.ts)
-```typescript
-import { httpRouter } from "convex/server";
-import { authComponent, createAuth } from "./auth";
-
-const http = httpRouter();
-authComponent.registerRoutes(http, createAuth);
-export default http;
-```
-
-### Frontend Provider
-```typescript
-// Client-side (auth-client.ts)
-export const authClient = createAuthClient({
-  plugins: [convexClient()],
-});
-
-// Provider (convex-client-provider.tsx)
-<ConvexBetterAuthProvider client={convex} betterAuth={authClient} expectAuth>
-  {children}
-</ConvexBetterAuthProvider>
-```
-
-### API Routes (Next.js)
-```typescript
-// app/api/auth/[...all]/route.ts
-import { nextJsHandler } from "@convex-dev/better-auth/nextjs";
-export const { GET, POST } = nextJsHandler();
-```
-
----
-
-## Common Gotchas
-
-**1. Async without await**
-```typescript
-// ❌ Unnecessary async
-handler: async (ctx) => {
-  return authComponent.getAuthUser(ctx);
-}
-
-// ✅ Remove async (function already returns Promise)
-handler: (ctx) => {
-  return authComponent.getAuthUser(ctx);
-}
-```
-
-**2. Orphaned profiles**
-```typescript
-// Profile exists but auth user deleted
-const authUser = await authComponent.getAnyUserById(ctx, profile.authId);
-if (!authUser) return null;  // Handle orphaned profile
-```
-
-**3. Onboarding flow**
-```
-1. Sign up → auth record created (hasCompletedOnboarding: false)
-2. Create profile → userProfiles record + set hasCompletedOnboarding: true
-3. Access app → check both authUser exists AND profile exists
-```
+### Key Functions
+- Join auth+profile: `profiles.ts:getCurrentUser`
+- Create profile: `profiles.ts:createProfile` (sets hasCompletedOnboarding)
+- Update profile: `profiles.ts:updateProfile`
+- Delete flow: See settings/page.tsx with query skip pattern
 
 ---
 
