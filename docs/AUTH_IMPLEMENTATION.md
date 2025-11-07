@@ -18,7 +18,7 @@
   - `hasCompletedOnboarding` - gates auth flow
   - `accountStatus` - auth-level suspension
 - **App table** (`userProfiles`): Business logic fields
-  - `displayName`, `bio`, `avatarUrl`, `role`, `location`, `timezone`
+  - `displayName`, `bio`, `profileImage`, `role`, `location`
 
 **Benefits:**
 - Schema stability (no regeneration conflicts)
@@ -49,9 +49,8 @@ userProfiles: {
   displayName: string,
   role: "athlete" | "coach" | "admin",
   bio?: string,
-  avatarUrl?: string,
+  profileImage?: string,
   location?: string,
-  timezone?: string,
   createdAt: number,
   updatedAt: number,
 }

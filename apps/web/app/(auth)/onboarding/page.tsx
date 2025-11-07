@@ -46,7 +46,6 @@ export default function OnboardingPage() {
       displayName: "",
       bio: "",
       location: "",
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     },
   });
 
@@ -71,7 +70,6 @@ export default function OnboardingPage() {
         role: data.role,
         bio: data.bio,
         location: data.location,
-        timezone: data.timezone,
       });
       toast.success("Welcome! Your profile has been created.");
       router.push("/dashboard/server");
@@ -177,23 +175,6 @@ export default function OnboardingPage() {
                       <FormControl>
                         <Input placeholder="City, Country" {...field} />
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="timezone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Timezone</FormLabel>
-                      <FormControl>
-                        <Input {...field} disabled />
-                      </FormControl>
-                      <FormDescription>
-                        Automatically detected from your system
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

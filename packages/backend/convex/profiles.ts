@@ -39,10 +39,9 @@ export const getCurrentUser = query({
         _id: profile._id,
         displayName: profile.displayName,
         bio: profile.bio,
-        avatarUrl: profile.avatarUrl,
+        profileImage: profile.profileImage,
         role: profile.role,
         location: profile.location,
-        timezone: profile.timezone,
       },
     };
   },
@@ -54,9 +53,8 @@ export const createProfile = mutation({
     displayName: v.string(),
     role: v.union(v.literal("athlete"), v.literal("coach"), v.literal("admin")),
     bio: v.optional(v.string()),
-    avatarUrl: v.optional(v.string()),
+    profileImage: v.optional(v.string()),
     location: v.optional(v.string()),
-    timezone: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const authUser = await authComponent.getAuthUser(ctx);
@@ -76,10 +74,10 @@ export const createProfile = mutation({
       authId: authUser._id,
       displayName: args.displayName,
       bio: args.bio,
-      avatarUrl: args.avatarUrl,
+      profileImage: args.profileImage,
       role: args.role,
       location: args.location,
-      timezone: args.timezone,
+      verificationStatus: "unverified", // Default status for new profiles
       createdAt: now,
       updatedAt: now,
     });
@@ -97,7 +95,7 @@ export const createProfile = mutation({
   },
 });
 
-// Generate upload URL for avatar images
+// Generate upload URL for Profile images
 export const generateUploadUrl = mutation({
   args: {},
   handler: async (ctx) => {
@@ -117,9 +115,8 @@ export const updateProfile = mutation({
   args: {
     displayName: v.optional(v.string()),
     bio: v.optional(v.string()),
-    avatarUrl: v.optional(v.string()),
+    profileImage: v.optional(v.string()),
     location: v.optional(v.string()),
-    timezone: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const authUser = await authComponent.getAuthUser(ctx);

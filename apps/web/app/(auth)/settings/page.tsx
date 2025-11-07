@@ -69,9 +69,8 @@ export default function SettingsPage() {
     defaultValues: {
       displayName: "",
       bio: "",
-      avatarUrl: "",
+      profileImage: "",
       location: "",
-      timezone: "",
     },
   });
 
@@ -81,9 +80,8 @@ export default function SettingsPage() {
       form.reset({
         displayName: currentUser.profile.displayName || "",
         bio: currentUser.profile.bio || "",
-        avatarUrl: currentUser.profile.avatarUrl || "",
+        profileImage: currentUser.profile.profileImage || "",
         location: currentUser.profile.location || "",
-        timezone: currentUser.profile.timezone || "",
       });
     }
   }, [currentUser, form]);
@@ -135,22 +133,21 @@ export default function SettingsPage() {
 
   const onSubmit = async (data: ProfileUpdateFormValues) => {
     try {
-      let avatarUrl = data.avatarUrl;
+      let profileImage = data.profileImage;
 
       // If user selected an image, upload it first
       if (selectedImage) {
         const storageId = await handleImageUpload();
         if (storageId) {
-          avatarUrl = storageId;
+          profileImage = storageId;
         }
       }
 
       await updateProfile({
         displayName: data.displayName,
         bio: data.bio,
-        avatarUrl,
+        profileImage,
         location: data.location,
-        timezone: data.timezone,
       });
 
       toast.success("Profile updated successfully!");
@@ -280,10 +277,10 @@ export default function SettingsPage() {
 
               <FormField
                 control={form.control}
-                name="avatarUrl"
+                name="profileImage"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Avatar</FormLabel>
+                    <FormLabel>Profile Image</FormLabel>
                     <FormControl>
                       <div className="space-y-4">
                         <div className="flex items-center gap-4">
@@ -313,7 +310,7 @@ export default function SettingsPage() {
                         </div>
                         <Input
                           type="url"
-                          placeholder="https://example.com/avatar.jpg"
+                          placeholder="https://example.com/profile-image.jpg"
                           {...field}
                           disabled={isUploading}
                         />
@@ -335,20 +332,6 @@ export default function SettingsPage() {
                     <FormLabel>Location</FormLabel>
                     <FormControl>
                       <Input placeholder="City, Country" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="timezone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Timezone</FormLabel>
-                    <FormControl>
-                      <Input placeholder="UTC+00:00" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

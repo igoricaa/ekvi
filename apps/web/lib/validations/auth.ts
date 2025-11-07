@@ -106,7 +106,7 @@ export const profileUpdateSchema = z.object({
     .min(2, "Display name must be at least 2 characters")
     .max(50, "Display name must be less than 50 characters"),
   bio: z.string().max(500, "Bio must be less than 500 characters").optional(),
-  avatarUrl: z
+  profileImage: z
     .string()
     .url("Please enter a valid URL")
     .optional()
@@ -115,7 +115,6 @@ export const profileUpdateSchema = z.object({
     .string()
     .max(100, "Location must be less than 100 characters")
     .optional(),
-  timezone: z.string().optional(),
 });
 
 export type ProfileUpdateFormValues = z.infer<typeof profileUpdateSchema>;
@@ -134,7 +133,6 @@ export const onboardingSchema = z.object({
     .string()
     .max(100, "Location must be less than 100 characters")
     .optional(),
-  timezone: z.string().optional(),
 });
 
 export type OnboardingFormValues = z.infer<typeof onboardingSchema>;
