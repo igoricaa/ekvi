@@ -265,6 +265,146 @@ window.location.href = "/sign-in";
 
 ---
 
+## Profile Image Upload & Removal
+
+### Implementation
+
+**File:** `apps/web/app/(auth)/settings/page.tsx`
+
+**Flow:**
+1. User clicks Image → DropdownMenu opens
+2. Select "Promeni fotografiju" → File input triggers
+3. User selects image → Preview dialog opens
+4. Show preview in large Image (size-64)
+5. Confirm → Upload to Convex Storage → Update profile → Success toast
+6. Or Cancel → Clear selection and close dialog
+
+**Components Used:**
+- Next.js Image (circular display with fallback div)
+- DropdownMenu (upload/remove options)
+- Dialog (preview before upload)
+- AlertDialog (confirm deletion)
+- File input (type="file", accept="image/*")
+
+**Key Features:**
+- Circular avatar with edit icon overlay
+- Preview before upload (prevents accidental uploads)
+- Confirm before delete (prevents accidental removal)
+- Loading states during upload
+- Toast notifications for success/error
+
+### Architecture Decisions
+
+**Decision:** Preview dialog before upload instead of immediate upload on file select
+
+**Why:**
+- Better UX - user sees what they're uploading
+- Prevents accidental uploads from file picker errors
+- Allows cancellation before committing storage space
+- Standard pattern in modern apps (Twitter, LinkedIn, etc.)
+
+**Trade-offs:** One extra click, but significantly better UX
+
+**Decision:** DropdownMenu instead of Popover for edit options
+
+**Why:**
+- Better semantic match (menu of actions vs floating content)
+- Built-in keyboard navigation
+- Better mobile touch targets
+- Consistent with shadcn patterns
+
+**Decision:** EditIcon positioned outside Image/fallback container
+
+**Why:**
+- Clean separation of concerns (image vs overlay decoration)
+- Absolute positioning allows independent styling
+- Works with both Image and fallback div states
+- Easier to maintain and modify overlay styling
+
+### Backend Functions
+
+**File:** `packages/backend/convex/profiles.ts`
+
+**Functions Used:**
+- `generateUploadUrl` - Create Convex Storage upload URL
+- `updateProfile` - Update profile with new storageId
+- `removeCurrentUserProfileImage` - Remove image and delete from storage
+- `getCurrentUser` - Fetch profile with image URL (needImageUrl: true)
+
+**Upload Flow:**
+```typescript
+// 1. Generate upload URL
+const uploadUrl = await generateUploadUrl();
+
+// 2. Upload file to Convex Storage
+const result = await fetch(uploadUrl, {
+  method: "POST",
+  headers: { "Content-Type": file.type },
+  body: file,
+});
+
+const { storageId } = await result.json();
+
+// 3. Update profile with storageId
+await updateProfile({ profileImage: storageId });
+```
+
+**Delete Flow:**
+```typescript
+// Remove from profile and delete from storage
+await removeCurrentUserProfileImage();
+// Backend deletes old image from storage automatically
+```
+
+### Common Patterns
+
+**Profile Image with Edit Overlay:**
+```typescript
+<div className="relative inline-block">
+  {imageUrl ? (
+    <Image
+      src={imageUrl}
+      alt="Profile Image"
+      width={160}
+      height={160}
+      className="object-cover rounded-full cursor-pointer size-40"
+    />
+  ) : (
+    <div className="size-40 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center">
+      {initials}
+    </div>
+  )}
+
+  {/* Edit icon overlay */}
+  <div className="absolute bottom-2 right-2 rounded-full bg-background p-1.5 shadow-md border">
+    <EditIcon size={16} />
+  </div>
+</div>
+```
+
+**Preview with Confirm/Cancel:**
+```typescript
+<Dialog open={isPreviewOpen}>
+  <DialogContent>
+    <Image
+      src={preview}
+      alt="Preview"
+      width={256}
+      height={256}
+      className="object-cover rounded-full size-64"
+    />
+    <DialogFooter>
+      <Button variant="outline" onClick={cancel}>Cancel</Button>
+      <Button onClick={confirm} disabled={uploading}>
+        {uploading ? <Loader2 /> : "Confirm"}
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
+```
+
+---
+
 ## Common UI Patterns
 
 ### Loading States
@@ -319,25 +459,6 @@ const handleResetPassword = async () => {
 
 ---
 
-## Troubleshooting
-
-### "Unauthenticated" Error After Delete
-**Cause:** Query runs after user deleted but before redirect
-**Fix:** Skip query when deleting (see Delete Account section)
-
-### Redirect Loop
-**Cause:** Middleware redirects to onboarding, onboarding redirects to sign-in
-**Fix:** Check session in onboarding before redirecting
-
-### Form Not Submitting on Enter
-**Cause:** Missing `type="submit"` on button
-**Fix:** Ensure `<Button type="submit">` inside `<form>`
-
-### 2FA Not Working
-**Status:** UI ready, backend implementation pending
-**Workaround:** Comment out 2FA redirect in sign-in handler
-
----
 
 ## Environment Variables
 

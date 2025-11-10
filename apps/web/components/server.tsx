@@ -17,7 +17,7 @@ export const UserProfile = ({
           alt={user.name}
           width={40}
           height={40}
-          className="rounded-full"
+          className="rounded-full size-10 object-cover"
         />
       ) : (
         <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center text-orange-600 dark:text-orange-200 font-medium">

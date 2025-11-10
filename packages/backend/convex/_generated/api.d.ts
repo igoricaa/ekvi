@@ -9,7 +9,14 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as crons from "../crons.js";
 import type * as http from "../http.js";
+import type * as mux_actions from "../mux/actions.js";
+import type * as mux_httpActions from "../mux/httpActions.js";
+import type * as mux_mutations from "../mux/mutations.js";
+import type * as mux_queries from "../mux/queries.js";
+import type * as mux_types from "../mux/types.js";
+import type * as mux_webhooks from "../mux/webhooks.js";
 import type * as profiles from "../profiles.js";
 import type * as users from "../users.js";
 
@@ -29,7 +36,14 @@ import type {
  */
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  crons: typeof crons;
   http: typeof http;
+  "mux/actions": typeof mux_actions;
+  "mux/httpActions": typeof mux_httpActions;
+  "mux/mutations": typeof mux_mutations;
+  "mux/queries": typeof mux_queries;
+  "mux/types": typeof mux_types;
+  "mux/webhooks": typeof mux_webhooks;
   profiles: typeof profiles;
   users: typeof users;
 }>;

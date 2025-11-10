@@ -30,11 +30,13 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   type OnboardingFormValues,
   onboardingSchema,
-} from "@/lib/validations/auth";
+} from "@/lib/validations/user-schemas";
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const currentUser = useQuery(api.profiles.getCurrentUser);
+  const currentUser = useQuery(api.profiles.getCurrentUser, {
+    needImageUrl: false,
+  });
   const createProfile = useMutation(api.profiles.createProfile);
   const [selectedRole, setSelectedRole] = useState<"athlete" | "coach" | null>(
     null

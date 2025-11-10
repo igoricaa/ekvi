@@ -46,7 +46,7 @@ export default defineSchema({
     // Core profile
     displayName: v.string(),
     bio: v.optional(v.string()),
-    profileImage: v.optional(v.string()), // URL to profile image (Convex storage)
+    profileImage: v.optional(v.id("_storage")), // Convex storage ID for profile image
 
     // Business logic
     role: v.union(v.literal("athlete"), v.literal("coach"), v.literal("admin")),
@@ -198,7 +198,7 @@ export default defineSchema({
     uploadedBy: v.id("userProfiles"),
 
     // Storage reference
-    storageId: v.string(), // Links to Convex _storage system table
+    storageId: v.id("_storage"), // Links to Convex _storage system table
 
     // Custom metadata (not in Convex _storage)
     fileName: v.string(), // User-friendly file name

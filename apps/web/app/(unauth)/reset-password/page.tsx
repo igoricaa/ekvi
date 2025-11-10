@@ -28,7 +28,7 @@ import { authClient } from "@/lib/auth-client";
 import {
   type PasswordResetFormValues,
   passwordResetSchema,
-} from "@/lib/validations/auth";
+} from "@/lib/validations/user-schemas";
 
 export default function ResetPasswordPage() {
   const router = useRouter();

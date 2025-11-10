@@ -1,7 +1,13 @@
 import { getSessionCookie } from "better-auth/cookies";
 import { NextRequest, NextResponse } from "next/server";
 
-const publicRoutes = ["/sign-in", "/sign-up", "/verify-2fa", "/reset-password"];
+const publicRoutes = [
+  "/",
+  "/sign-in",
+  "/sign-up",
+  "/verify-2fa",
+  "/reset-password",
+];
 
 export function proxy(request: NextRequest) {
   const sessionCookie = getSessionCookie(request);
@@ -19,7 +25,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }
 
-  if ((isPublicRoute || pathname === "/") && sessionCookie) {
+  if (pathname === "/" && sessionCookie) {
     console.log("Redirecting to dashboard/server");
     return NextResponse.redirect(new URL("/dashboard/server", request.url));
   }

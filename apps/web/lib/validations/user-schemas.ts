@@ -106,11 +106,6 @@ export const profileUpdateSchema = z.object({
     .min(2, "Display name must be at least 2 characters")
     .max(50, "Display name must be less than 50 characters"),
   bio: z.string().max(500, "Bio must be less than 500 characters").optional(),
-  profileImage: z
-    .string()
-    .url("Please enter a valid URL")
-    .optional()
-    .or(z.literal("")),
   location: z
     .string()
     .max(100, "Location must be less than 100 characters")
@@ -118,6 +113,19 @@ export const profileUpdateSchema = z.object({
 });
 
 export type ProfileUpdateFormValues = z.infer<typeof profileUpdateSchema>;
+
+export const uploadImageSchema = z.object({
+  image: z
+    .instanceof(File)
+    .refine((file) => file.size <= 5 * 1024 * 1024, {
+      message: "Image must be less than 5MB",
+    })
+    .refine((file) => file.type.startsWith("image/"), {
+      message: "File must be an image",
+    }),
+});
+
+export type UploadImageFormValues = z.infer<typeof uploadImageSchema>;
 
 // Onboarding schema
 export const onboardingSchema = z.object({

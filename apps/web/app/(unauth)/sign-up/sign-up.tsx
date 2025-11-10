@@ -1,8 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, X } from "lucide-react";
-import Image from "next/image";
+import { Loader2 } from "lucide-react";
+
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -26,19 +26,22 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
-import { type SignUpFormValues, signUpSchema } from "@/lib/validations/auth";
+import {
+  type SignUpFormValues,
+  signUpSchema,
+} from "@/lib/validations/user-schemas";
 
-function convertImageToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
+// function convertImageToBase64(file: File): Promise<string> {
+//   return new Promise((resolve, reject) => {
+//     const reader = new FileReader();
+//     reader.onloadend = () => resolve(reader.result as string);
+//     reader.onerror = reject;
+//     reader.readAsDataURL(file);
+//   });
+// }
 
 export default function SignUp() {
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  // const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -53,17 +56,17 @@ export default function SignUp() {
     },
   });
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      form.setValue("image", file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  // const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const file = e.target.files?.[0];
+  //   if (file) {
+  //     form.setValue("image", file);
+  //     const reader = new FileReader();
+  //     reader.onloadend = () => {
+  //       setImagePreview(reader.result as string);
+  //     };
+  //     reader.readAsDataURL(file);
+  //   }
+  // };
 
   const onSubmit = async (data: SignUpFormValues) => {
     await authClient.signUp.email(
@@ -71,7 +74,7 @@ export default function SignUp() {
         email: data.email,
         password: data.password,
         name: `${data.firstName} ${data.lastName}`,
-        image: data.image ? await convertImageToBase64(data.image) : "",
+        // image: data.image ? await convertImageToBase64(data.image) : "",
       },
       {
         onRequest: () => {
@@ -202,50 +205,6 @@ export default function SignUp() {
                       autoComplete="new-password"
                       {...field}
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="image"
-              render={({ field: { value, onChange, ...field } }) => (
-                <FormItem>
-                  <FormLabel>Profile Image (optional)</FormLabel>
-                  <FormControl>
-                    <div className="flex items-end gap-4">
-                      {imagePreview && (
-                        <div className="relative w-16 h-16 rounded-sm overflow-hidden">
-                          <Image
-                            alt="Profile preview"
-                            className="w-full h-full object-cover"
-                            height={64}
-                            src={imagePreview}
-                            width={64}
-                          />
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2 w-full">
-                        <Input
-                          accept="image/*"
-                          className="w-full"
-                          type="file"
-                          onChange={handleImageChange}
-                          {...field}
-                        />
-                        {imagePreview && (
-                          <X
-                            className="cursor-pointer"
-                            onClick={() => {
-                              form.setValue("image", undefined);
-                              setImagePreview(null);
-                            }}
-                          />
-                        )}
-                      </div>
-                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

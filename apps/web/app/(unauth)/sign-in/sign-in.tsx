@@ -25,7 +25,10 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
-import { type SignInFormValues, signInSchema } from "@/lib/validations/auth";
+import {
+  type SignInFormValues,
+  signInSchema,
+} from "@/lib/validations/user-schemas";
 
 export default function SignIn() {
   const router = useRouter();

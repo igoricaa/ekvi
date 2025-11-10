@@ -284,7 +284,7 @@ Net savings: 13 MB - 1 MB = 12 MB
   authId: string,              // References Better Auth user._id (1:1)
   displayName: string,
   bio?: string,
-  profileImage?: string,       // URL or storageId
+  profileImage?: Id<"_storage">,  // Convex Storage ID for profile image
   role: "athlete" | "coach" | "admin",
   location?: string,           // City, country for discovery
   languages?: string[],        // e.g., ["en", "sr"]
@@ -309,6 +309,12 @@ Net savings: 13 MB - 1 MB = 12 MB
 **Relationships**:
 - `authId` → Better Auth `user._id` (1:1)
 - Referenced by: `coachProfiles`, `videos`, `files`, `exercises`, `notifications`
+
+**Profile Image Management:**
+- Upload: `generateUploadUrl` → user upload → `updateProfile({ profileImage: storageId })`
+- Display: Backend query generates fresh URL via `ctx.storage.getUrl(storageId)`
+- Delete: `removeCurrentUserProfileImage` removes from profile and deletes from storage
+- Never store URLs directly (they expire)
 
 **Notes**:
 - Timezone removed (Serbia/Balkans single timezone)

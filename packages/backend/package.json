@@ -8,6 +8,7 @@
     "deploy": "convex deploy"
   },
   "dependencies": {
+    "@mux/mux-node": "^12.8.0",
     "convex": "^1.28.2"
   },
   "devDependencies": {

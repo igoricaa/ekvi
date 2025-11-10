@@ -3,7 +3,7 @@
 import { api } from "@convex/_generated/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "convex/react";
-import { Loader2 } from "lucide-react";
+import { EditIcon, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -44,24 +44,44 @@ import { cn } from "@/lib/utils";
 import {
   type ProfileUpdateFormValues,
   profileUpdateSchema,
-} from "@/lib/validations/auth";
+  UploadImageFormValues,
+  uploadImageSchema,
+} from "@/lib/validations/user-schemas";
+import {
+  DropdownMenu,
+  DropdownMenuItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import Image from "next/image";
 
 export default function SettingsPage() {
   const router = useRouter();
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Skip query when deleting to prevent "Unauthenticated" error
-  const currentUser = useQuery(
-    api.profiles.getCurrentUser,
-    isDeleting ? "skip" : {}
-  );
+  const currentUser = useQuery(api.profiles.getCurrentUser, {
+    needImageUrl: true,
+  });
   const updateProfile = useMutation(api.profiles.updateProfile);
   const generateUploadUrl = useMutation(api.profiles.generateUploadUrl);
   const deleteCurrentUserProfile = useMutation(
     api.profiles.deleteCurrentUserProfile
+  );
+  const removeProfileImage = useMutation(
+    api.profiles.removeCurrentUserProfileImage
   );
 
   const form = useForm<ProfileUpdateFormValues>({
@@ -69,8 +89,14 @@ export default function SettingsPage() {
     defaultValues: {
       displayName: "",
       bio: "",
-      profileImage: "",
       location: "",
+    },
+  });
+
+  const uploadImageForm = useForm<UploadImageFormValues>({
+    resolver: zodResolver(uploadImageSchema),
+    defaultValues: {
+      image: undefined,
     },
   });
 
@@ -80,7 +106,6 @@ export default function SettingsPage() {
       form.reset({
         displayName: currentUser.profile.displayName || "",
         bio: currentUser.profile.bio || "",
-        profileImage: currentUser.profile.profileImage || "",
         location: currentUser.profile.location || "",
       });
     }
@@ -90,10 +115,12 @@ export default function SettingsPage() {
     const file = event.target.files?.[0];
     if (file) {
       setSelectedImage(file);
+
       // Create preview URL
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
+        setIsPreviewOpen(true); // Open preview dialog when ready
       };
       reader.readAsDataURL(file);
     }
@@ -107,10 +134,8 @@ export default function SettingsPage() {
     try {
       setIsUploading(true);
 
-      // Step 1: Get upload URL
       const uploadUrl = await generateUploadUrl();
 
-      // Step 2: Upload file to the URL
       const result = await fetch(uploadUrl, {
         method: "POST",
         headers: { "Content-Type": selectedImage.type },
@@ -131,28 +156,38 @@ export default function SettingsPage() {
     }
   };
 
+  const handleConfirmUpload = async () => {
+    if (!selectedImage) {
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      const storageId = await handleImageUpload();
+
+      if (storageId) {
+        await updateProfile({ profileImage: storageId });
+        toast.success("Fotografija je uspešno promenjena!");
+        setIsPreviewOpen(false);
+        setImagePreview(null);
+        setSelectedImage(null);
+      }
+    } catch {
+      toast.error("Greška pri promeni fotografije. Pokušajte ponovo.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const onSubmit = async (data: ProfileUpdateFormValues) => {
     try {
-      let profileImage = data.profileImage;
-
-      // If user selected an image, upload it first
-      if (selectedImage) {
-        const storageId = await handleImageUpload();
-        if (storageId) {
-          profileImage = storageId;
-        }
-      }
-
       await updateProfile({
         displayName: data.displayName,
         bio: data.bio,
-        profileImage,
         location: data.location,
       });
 
       toast.success("Profile updated successfully!");
-      setSelectedImage(null);
-      setImagePreview(null);
     } catch {
       toast.error("Failed to update profile. Please try again.");
     }
@@ -226,6 +261,157 @@ export default function SettingsPage() {
         </p>
       </div>
 
+      <div className="mb-6">
+        <div className="relative inline-block">
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
+              <div>
+                {currentUser.profile.profileImage ? (
+                  <Image
+                    src={currentUser.profile.profileImage || ""}
+                    alt="Profile Image"
+                    width={160}
+                    height={160}
+                    className="object-cover rounded-full cursor-pointer size-40"
+                  />
+                ) : (
+                  <div className="size-40 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center text-orange-600 dark:text-orange-200 font-medium">
+                    {currentUser.profile.displayName.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="start">
+              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                <Form {...uploadImageForm}>
+                  <form
+                    onSubmit={uploadImageForm.handleSubmit(handleImageUpload)}
+                  >
+                    <FormField
+                      control={uploadImageForm.control}
+                      name="image"
+                      render={() => (
+                        <FormItem>
+                          <FormLabel
+                            className={cn(
+                              buttonVariants({ variant: "ghost" }),
+                              "pl-3"
+                            )}
+                          >
+                            Promeni fotografiju
+                          </FormLabel>
+
+                          <FormControl className="hidden">
+                            <Input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleImageSelect}
+                              disabled={isUploading}
+                              className={cn(
+                                "cursor-pointer",
+                                isUploading && "opacity-50"
+                              )}
+                              placeholder="Odaberi fotografiju"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </form>
+                </Form>
+              </DropdownMenuItem>
+
+              {currentUser.profile.profileImage && (
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        Izbriši fotografiju
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Da li ste sigurni?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Ova akcija ne može biti poništena.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Odustani</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={async () => {
+                            await removeProfileImage();
+                            toast.success("Fotografija je izbrisana");
+                          }}
+                        >
+                          Izbriši fotografiju
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Edit icon overlay */}
+          <div className="absolute bottom-2 right-2 rounded-full bg-background p-1.5 shadow-md border border-border pointer-events-none">
+            <EditIcon size={16} className="text-muted-foreground" />
+          </div>
+        </div>
+      </div>
+
+      {/* Image Preview Dialog */}
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Pregled profilne fotografije</DialogTitle>
+            <DialogDescription>
+              Pregledajte svoju fotografiju pre učitavanja
+            </DialogDescription>
+          </DialogHeader>
+
+          {imagePreview && (
+            <Image
+              src={imagePreview}
+              alt="Profile Image Preview"
+              width={256}
+              height={256}
+              className="object-cover rounded-full cursor-pointer size-64"
+            />
+          )}
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setIsPreviewOpen(false);
+                setImagePreview(null);
+                setSelectedImage(null);
+              }}
+            >
+              Odustani
+            </Button>
+            <Button
+              type="button"
+              onClick={handleConfirmUpload}
+              disabled={isUploading}
+            >
+              {isUploading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Učitavam...
+                </>
+              ) : (
+                "Potvrdi i učitaj"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Card>
         <CardHeader>
           <CardTitle>Profile Information</CardTitle>
@@ -269,55 +455,6 @@ export default function SettingsPage() {
                     </FormControl>
                     <FormDescription>
                       A brief description about yourself (max 500 characters)
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="profileImage"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Profile Image</FormLabel>
-                    <FormControl>
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-4">
-                          {imagePreview && (
-                            <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-border">
-                              <img
-                                width={80}
-                                height={80}
-                                src={imagePreview}
-                                alt="Avatar preview"
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          )}
-                          <div className="flex-1">
-                            <Input
-                              type="file"
-                              accept="image/*"
-                              onChange={handleImageSelect}
-                              disabled={isUploading}
-                              className="cursor-pointer"
-                            />
-                          </div>
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          Or provide a URL:
-                        </div>
-                        <Input
-                          type="url"
-                          placeholder="https://example.com/profile-image.jpg"
-                          {...field}
-                          disabled={isUploading}
-                        />
-                      </div>
-                    </FormControl>
-                    <FormDescription>
-                      Upload an image or provide a link to your profile picture
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

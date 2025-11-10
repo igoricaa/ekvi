@@ -1,12 +1,39 @@
 import { v } from "convex/values";
 import { components } from "./_generated/api";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./auth";
 
+/**
+ * Get Current User Profile (Helper)
+ *
+ * Retrieves authenticated user's profile in one operation.
+ * For use in queries and mutations only (direct ctx.db access).
+ *
+ * For actions, use ctx.runQuery(api.profiles.getCurrentUser) instead.
+ *
+ * @throws Error if profile not found (user hasn't completed onboarding)
+ * @returns Object containing authUser and profile
+ */
+export async function getCurrentUserProfile(ctx: QueryCtx | MutationCtx) {
+  const authUser = await authComponent.getAuthUser(ctx);
+
+  const profile = await ctx.db
+    .query("userProfiles")
+    .withIndex("by_auth", (q) => q.eq("authId", authUser._id))
+    .first();
+
+  if (!profile) {
+    throw new Error("Profile not found - complete onboarding first");
+  }
+
+  return { authUser, profile };
+}
+
 // Get full user (auth + profile)
 export const getCurrentUser = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { needImageUrl: v.optional(v.boolean()) },
+  handler: async (ctx, args) => {
     // TODO: proveri šta authUser vraća kada ne postoji authUser, da li vraća null
     const authUser = await authComponent.getAuthUser(ctx);
 
@@ -28,6 +55,12 @@ export const getCurrentUser = query({
       };
     }
 
+    const needUrl = args.needImageUrl ?? true;
+    const profileImageUrl =
+      needUrl && profile.profileImage
+        ? await ctx.storage.getUrl(profile.profileImage)
+        : null;
+
     return {
       authUser: {
         _id: authUser._id,
@@ -39,7 +72,7 @@ export const getCurrentUser = query({
         _id: profile._id,
         displayName: profile.displayName,
         bio: profile.bio,
-        profileImage: profile.profileImage,
+        profileImage: profileImageUrl,
         role: profile.role,
         location: profile.location,
       },
@@ -53,7 +86,7 @@ export const createProfile = mutation({
     displayName: v.string(),
     role: v.union(v.literal("athlete"), v.literal("coach"), v.literal("admin")),
     bio: v.optional(v.string()),
-    profileImage: v.optional(v.string()),
+    profileImage: v.optional(v.id("_storage")),
     location: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -115,7 +148,7 @@ export const updateProfile = mutation({
   args: {
     displayName: v.optional(v.string()),
     bio: v.optional(v.string()),
-    profileImage: v.optional(v.string()),
+    profileImage: v.optional(v.id("_storage")),
     location: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -178,6 +211,31 @@ export const deleteCurrentUserProfile = mutation({
     if (profile) {
       await ctx.db.delete(profile._id);
     }
+
+    return { success: true };
+  },
+});
+
+export const removeCurrentUserProfileImage = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const authUser = await authComponent.getAuthUser(ctx);
+
+    const profile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_auth", (q) => q.eq("authId", authUser._id))
+      .first();
+
+    if (!profile) {
+      throw new Error("Profile not found - complete onboarding first");
+    }
+
+    if (!profile.profileImage) {
+      throw new Error("Profile image not found");
+    }
+
+    await ctx.db.patch(profile._id, { profileImage: undefined });
+    await ctx.storage.delete(profile.profileImage);
 
     return { success: true };
   },

@@ -33,5 +33,13 @@ export const UserProfile = ({
     }
   }, [user, isLoading]);
 
-  return <UserProfileComponent user={currentUser.authUser} />;
+  return (
+    <UserProfileComponent
+      user={{
+        name: currentUser.authUser.name,
+        image: currentUser.profile?.profileImage,
+        email: currentUser.authUser.email,
+      }}
+    />
+  );
 };

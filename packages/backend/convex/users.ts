@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { components } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
 import { authComponent, createAuth } from "./auth";
+import { getCurrentUserProfile } from "./profiles";
 
 // Get auth user only (minimal data)
 export const getAuthUser = query({
@@ -55,15 +56,10 @@ export const revokeSession = mutation({
 export const suspendAccount = mutation({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
-    const currentUser = await authComponent.getAuthUser(ctx);
-
     // Check admin (via profile)
-    const adminProfile = await ctx.db
-      .query("userProfiles")
-      .withIndex("by_auth", (q) => q.eq("authId", currentUser._id))
-      .first();
+    const { profile: adminProfile } = await getCurrentUserProfile(ctx);
 
-    if (!adminProfile || adminProfile.role !== "admin") {
+    if (adminProfile.role !== "admin") {
       throw new Error("Admin access required");
     }
 
