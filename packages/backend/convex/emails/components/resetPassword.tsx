@@ -3,7 +3,7 @@ import { Button } from "./Button";
 import { Layout } from "./Layout";
 import SupportSection from "./SupportSection";
 
-const ResetPasswordTemplate = ({
+const ResetPasswordEmailTemplate = ({
   resetUrl,
   // userEmail,
 }: {
@@ -79,9 +79,9 @@ const ResetPasswordTemplate = ({
   );
 };
 
-ResetPasswordTemplate.PreviewProps = {
-  resetUrl: "https://ekvi.com/reset-password?token=abc123xyz789",
+ResetPasswordEmailTemplate.PreviewProps = {
+  resetUrl: "https://ekvilibrijum.rs/reset-password?token=abc123xyz789",
   userEmail: "stanisavljevic.igor@proton.me",
 };
 
-export default ResetPasswordTemplate;
+export default ResetPasswordEmailTemplate;

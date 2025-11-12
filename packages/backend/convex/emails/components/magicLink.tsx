@@ -85,7 +85,7 @@ const MagicLinkTemplate = ({
 };
 
 MagicLinkTemplate.PreviewProps = {
-  magicLinkUrl: "https://ekvi.com/magic-link?token=abc123xyz789",
+  magicLinkUrl: "https://ekvilibrijum.rs/magic-link?token=abc123xyz789",
   userEmail: "stanisavljevic.igor@proton.me",
 };
 

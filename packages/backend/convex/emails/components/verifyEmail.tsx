@@ -76,7 +76,7 @@ const VerifyEmailTemplate = ({
 };
 
 VerifyEmailTemplate.PreviewProps = {
-  verificationUrl: "https://ekvi.com/verify-email?token=abc123xyz789",
+  verificationUrl: "https://ekvilibrijum.rs/verify-email?token=abc123xyz789",
   userEmail: "stanisavljevic.igor@proton.me",
 };
 

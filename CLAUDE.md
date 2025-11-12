@@ -74,6 +74,7 @@ Ultracite extends `ultracite/core`, `ultracite/react`, and `ultracite/next` pres
 - **Functions**: Export queries, mutations, and actions from Convex function files
 - **Generated Types**: Auto-generated in `_generated/` - never edit manually
 - **Deployment**: Uses `CONVEX_DEPLOYMENT` env variable
+- **Runtime**: V8 isolate (no Node.js APIs like `process`, `fs`, etc.)
 
 ### Next.js Frontend
 
@@ -117,6 +118,116 @@ const users = useQuery(api.users.list);
 - Use `pnpm --filter <workspace>` to run commands in specific workspaces
 - Use `pnpm --recursive` to run across all workspaces
 - Dependencies are hoisted to root `node_modules` when possible
+
+## Testing Best Practices
+
+### Running Tests
+
+```bash
+# Run all tests
+pnpm test
+
+# Run backend tests
+pnpm --filter backend test
+
+# Run frontend tests
+pnpm --filter web test
+
+# Run with verbose output
+pnpm --filter backend test -- --reporter=verbose
+```
+
+### Backend Testing (Convex)
+
+**Key Pattern**: Use `setupConvexTest()` and `createAuthenticatedTestUser()` helpers.
+
+```typescript
+import { setupConvexTest } from "../test.setup";
+import { createAuthenticatedTestUser } from "./helpers";
+import { api } from "../_generated/api";
+
+it("should perform authenticated action", async () => {
+  const t = setupConvexTest();
+  const { asUser, userId } = await createAuthenticatedTestUser(t, {
+    email: "test@example.com",
+    name: "Test User",
+  });
+
+  const result = await asUser.mutation(api.feature.action, { /* args */ });
+  expect(result).toBeDefined();
+});
+```
+
+### Test File Separation: Deployed vs Non-Deployed
+
+**CRITICAL**: Files inside `convex/` directory are compiled and deployed to Convex (V8 isolate runtime). Files at backend root are never deployed.
+
+**V8 Isolate Restrictions**:
+- No Node.js APIs (`process`, `fs`, `path`, etc.)
+- No `process.on()`, `process.env` (except `CONVEX_SITE_URL`)
+- Must be V8 isolate-compatible
+
+**File Structure**:
+```
+packages/backend/
+├── vitest.setup.ts              # ✅ Node.js APIs allowed (not deployed)
+└── convex/
+    ├── crons.ts                 # ⚠️ Deployed (must be V8-safe)
+    ├── schema.ts                # ⚠️ Deployed (must be V8-safe)
+    └── __tests__/
+        └── setup.ts             # ⚠️ Deployed (must be V8-safe)
+```
+
+**Example** - Error handler in `vitest.setup.ts` (backend root):
+```typescript
+// ✅ Safe: This file is NOT deployed to Convex
+process.on("unhandledRejection", (reason: unknown) => {
+  const error = reason as Error;
+
+  // Suppress scheduler errors from crons.ts during tests
+  if (
+    error?.message?.includes("Write outside of transaction") &&
+    error?.message?.includes("_scheduled_functions")
+  ) {
+    return; // Expected - convex-test doesn't support schedulers
+  }
+
+  throw reason; // Re-throw all other errors
+});
+```
+
+### Cron Testing Pattern
+
+**Problem**: convex-test doesn't support cron job schedulers. Cron registration tries to write to `_scheduled_functions` table during module loading.
+
+**Solution**: Test the underlying mutation directly, not the cron registration.
+
+```typescript
+// ❌ Don't test cron registration
+// crons.daily("cleanup", { hourUTC: 4 }, internal.cleanup);
+
+// ✅ Test the underlying mutation
+it("should cleanup abandoned uploads", async () => {
+  const t = setupConvexTest();
+  await t.mutation(internal.mux.mutations.cleanupAbandonedUploads);
+
+  // Assert cleanup happened
+  const videos = await t.run(async (ctx) => {
+    return await ctx.db.query("videos").collect();
+  });
+
+  expect(videos.filter(v => v.status === "abandoned")).toHaveLength(0);
+});
+```
+
+**Why**: The scheduler error is suppressed in `vitest.setup.ts` (see above). This allows tests to run without failing on cron registration, while still testing the business logic.
+
+### Test Documentation
+
+For complete testing patterns, examples, and troubleshooting:
+- [packages/backend/convex/README.md](packages/backend/convex/README.md) - Quick reference
+- [testing_todo.md](testing_todo.md) - Implementation status
+- [TESTING-ROADMAP.md](TESTING-ROADMAP.md) - Comprehensive testing guide
 
 ## Project Management
 

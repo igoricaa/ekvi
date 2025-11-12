@@ -6,8 +6,11 @@ const SupportSection = () => {
       <Text className="text-sm text-gray-400 m-0 leading-[20px]">
         Need help? Our support team is here to assist you. Reply to this email
         or contact us at{" "}
-        <Link href="mailto:support@ekvi.com" className="text-primary underline">
-          support@ekvi.com
+        <Link
+          href="mailto:support@ekvilibrijum.rs"
+          className="text-primary underline"
+        >
+          support@ekvilibrijum.rs
         </Link>
       </Text>
     </Section>

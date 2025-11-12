@@ -158,10 +158,10 @@ const WelcomeEmailTemplate = ({
 
 WelcomeEmailTemplate.PreviewProps = {
   userName: "John Doe",
-  dashboardUrl: "https://ekvi.com/dashboard",
-  programsUrl: "https://ekvi.com/programs",
-  communityUrl: "https://ekvi.com/community",
-  supportUrl: "https://ekvi.com/support",
+  dashboardUrl: "https://ekvilibrijum.rs/dashboard",
+  programsUrl: "https://ekvilibrijum.rs/programs",
+  communityUrl: "https://ekvilibrijum.rs/community",
+  supportUrl: "https://ekvilibrijum.rs/support",
   userEmail: "stanisavljevic.igor@proton.me",
 };
 
