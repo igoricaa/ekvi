@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "pnpm run --parallel dev",
     "dev:web": "pnpm --filter web dev",
-    "dev:convex": "npx convex dev",
+    "dev:convex": "pnpx convex dev",
     "build": "pnpm run --recursive build",
     "check": "npx ultracite@latest check",
     "fix": "npx ultracite@latest fix",

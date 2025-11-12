@@ -1,90 +1,140 @@
-# Welcome to your Convex functions directory!
+# Convex Backend
 
-Write your Convex functions here.
-See https://docs.convex.dev/functions for more.
+EKVI backend built on Convex - a serverless backend with real-time queries, automatic type generation, and built-in reactivity.
 
-A query function that takes two arguments looks like:
+## Development
 
-```ts
-// convex/myFunctions.ts
-import { query } from "./_generated/server";
-import { v } from "convex/values";
+```bash
+# Start Convex dev server (from root)
+pnpm dev:convex
 
-export const myQueryFunction = query({
-  // Validators for arguments.
-  args: {
-    first: v.number(),
-    second: v.string(),
-  },
+# Or from packages/backend
+cd packages/backend && pnpm dev
 
-  // Function implementation.
-  handler: async (ctx, args) => {
-    // Read the database as many times as you need here.
-    // See https://docs.convex.dev/database/reading-data.
-    const documents = await ctx.db.query("tablename").collect();
+# Deploy to production
+pnpx convex deploy
+```
 
-    // Arguments passed from the client are properties of the args object.
-    console.log(args.first, args.second);
+## Testing
 
-    // Write arbitrary JavaScript here: filter, aggregate, build derived data,
-    // remove non-public properties, or create new objects.
-    return documents;
-  },
+### Running Tests
+
+```bash
+# Run all backend tests
+pnpm --filter backend test
+
+# Run specific test file
+pnpm --filter backend test -- auth.test.ts
+
+# Run with verbose output
+pnpm --filter backend test -- --reporter=verbose
+
+# Run in watch mode
+pnpm --filter backend test -- --watch
+```
+
+### Test Structure
+
+```
+packages/backend/
+├── vitest.config.ts              # Vitest configuration
+├── vitest.setup.ts               # Global setup (Node.js APIs allowed, not deployed)
+└── convex/
+    ├── test.setup.ts             # Convex test helper factory
+    └── __tests__/
+        ├── setup.ts              # Convex utilities (deployed, must be V8-safe)
+        ├── helpers.ts            # Auth test helpers
+        ├── auth.test.ts          # Auth tests (18 tests)
+        ├── videos.test.ts        # Video tests (39 tests)
+        └── users.test.ts         # User tests (7 tests)
+```
+
+### Writing Tests
+
+```typescript
+import { setupConvexTest } from "../test.setup";
+import { createAuthenticatedTestUser } from "./helpers";
+import { api } from "../_generated/api";
+
+describe("Feature Tests", () => {
+  it("should perform action", async () => {
+    const t = setupConvexTest();
+    const { asUser, userId } = await createAuthenticatedTestUser(t, {
+      email: "test@example.com",
+      name: "Test User",
+    });
+
+    const result = await asUser.mutation(api.feature.action, {
+      // args
+    });
+
+    expect(result).toBeDefined();
+  });
 });
 ```
 
-Using this query function in a React component looks like:
+### Cron Testing Pattern
 
-```ts
-const data = useQuery(api.myFunctions.myQueryFunction, {
-  first: 10,
-  second: "hello",
+**Problem**: convex-test doesn't support cron job schedulers.
+
+**Solution**: Test the underlying mutation directly, not the cron registration.
+
+```typescript
+// ❌ Don't test cron registration
+// crons.daily("cleanup", { hourUTC: 4 }, internal.cleanup);
+
+// ✅ Test the underlying mutation
+it("should cleanup abandoned uploads", async () => {
+  const t = setupConvexTest();
+  await t.mutation(internal.mux.mutations.cleanupAbandonedUploads);
+  // assertions...
 });
 ```
 
-A mutation function looks like:
+**Why**: Cron registration happens during module loading and tries to write to `_scheduled_functions` table. convex-test doesn't support schedulers, so this causes errors. The error is suppressed in `vitest.setup.ts` (see below).
 
-```ts
-// convex/myFunctions.ts
-import { mutation } from "./_generated/server";
-import { v } from "convex/values";
+### File Separation: Deployed vs Non-Deployed
 
-export const myMutationFunction = mutation({
-  // Validators for arguments.
-  args: {
-    first: v.string(),
-    second: v.string(),
-  },
+**Important**: Files inside `convex/` directory are compiled and deployed to Convex (V8 isolate runtime). Files at backend root are never deployed.
 
-  // Function implementation.
-  handler: async (ctx, args) => {
-    // Insert or modify documents in the database here.
-    // Mutations can also read from the database like queries.
-    // See https://docs.convex.dev/database/writing-data.
-    const message = { body: args.first, author: args.second };
-    const id = await ctx.db.insert("messages", message);
+**V8 Isolate Restrictions**:
+- No Node.js APIs (process, fs, path, etc.)
+- No `process.on()`, `process.env` (except `CONVEX_SITE_URL`)
+- Must be V8 isolate-compatible
 
-    // Optionally, return a value from your mutation.
-    return await ctx.db.get(id);
-  },
+**File Structure**:
+```
+packages/backend/
+├── vitest.setup.ts              # Node.js APIs allowed (not deployed)
+└── convex/
+    ├── crons.ts                 # Deployed (V8-safe)
+    ├── schema.ts                # Deployed (V8-safe)
+    └── __tests__/
+        └── setup.ts             # Deployed (V8-safe)
+```
+
+**Example** - `vitest.setup.ts` (backend root):
+```typescript
+// ✅ Safe: This file is NOT deployed
+process.on("unhandledRejection", (reason: unknown) => {
+  // Suppress scheduler errors from crons.ts during tests
+  if (error?.message?.includes("_scheduled_functions")) {
+    return;
+  }
+  throw reason;
 });
 ```
 
-Using this mutation function in a React component looks like:
+**Example** - `convex/__tests__/setup.ts`:
+```typescript
+// ⚠️ This file IS deployed - keep it V8-safe
+// No process.on(), process.env, fs, etc.
 
-```ts
-const mutation = useMutation(api.myFunctions.myMutationFunction);
-function handleButtonPress() {
-  // fire and forget, the most common way to use mutations
-  mutation({ first: "Hello!", second: "me" });
-  // OR
-  // use the result once the mutation has completed
-  mutation({ first: "Hello!", second: "me" }).then((result) =>
-    console.log(result),
-  );
-}
+export {}; // Currently empty, for future Convex-specific utilities
 ```
 
-Use the Convex CLI to push your functions to a deployment. See everything
-the Convex CLI can do by running `npx convex -h` in your project root
-directory. To learn more, launch the docs with `npx convex docs`.
+## Documentation
+
+- [Convex Docs](https://docs.convex.dev)
+- [Convex Testing Guide](https://docs.convex.dev/testing/convex-test)
+- [Testing Roadmap](../../TESTING-ROADMAP.md) - Full testing patterns and examples

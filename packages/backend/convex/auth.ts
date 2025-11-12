@@ -1,9 +1,11 @@
 import { createClient, type GenericCtx } from "@convex-dev/better-auth";
 import { convex } from "@convex-dev/better-auth/plugins";
+import { requireActionCtx } from "@convex-dev/better-auth/utils";
 import { betterAuth } from "better-auth";
 import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
 import authSchema from "./betterAuth/schema";
+import { sendEmailVerification, sendResetPassword } from "./email";
 
 const siteUrl = process.env.SITE_URL;
 
@@ -32,7 +34,23 @@ export const createAuth = (
     database: authComponent.adapter(ctx),
     emailAndPassword: {
       enabled: true,
-      requireEmailVerification: false,
+      requireEmailVerification: true,
+      sendOnSignUp: true,
+      sendResetPassword: async ({ user, url }) => {
+        await sendResetPassword(requireActionCtx(ctx), {
+          to: user.email,
+          url,
+        });
+      },
+    },
+    emailVerification: {
+      sendVerificationEmail: async ({ user, url }) => {
+        await sendEmailVerification(requireActionCtx(ctx), {
+          to: user.email,
+          url,
+        });
+      },
+      verificationTokenExpiresIn: 86_400, // 24 hours in seconds
     },
     user: {
       deleteUser: {

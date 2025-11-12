@@ -4,21 +4,30 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "convex dev",
-    "deploy": "convex deploy"
+    "dev": "pnpx convex dev",
+    "deploy": "convex deploy",
+    "test": "vitest",
+    "test:once": "vitest run",
+    "test:debug": "vitest --inspect-brk --no-file-parallelism",
+    "test:coverage": "vitest run --coverage --coverage.reporter=text",
+    "test:watch": "vitest --watch",
+    "email": "email dev --dir convex/emails"
   },
   "dependencies": {
     "@convex-dev/resend": "^0.1.13",
     "@mux/mux-node": "^12.8.0",
     "@react-email/components": "^1.0.0",
     "@react-email/render": "^2.0.0",
-    "convex": "^1.28.2",
+    "convex": "^1.29.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-email": "^5.0.1"
   },
   "devDependencies": {
-    "typescript": "^5.9.3"
+    "@react-email/preview-server": "5.0.1",
+    "@types/react": "^19.2.2",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.2"
   },
   "author": "",
   "license": "ISC",
