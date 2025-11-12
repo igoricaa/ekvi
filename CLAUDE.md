@@ -205,6 +205,52 @@ mcp__context7__get-library-docs context7CompatibleLibraryID:"/convex/convex" top
 3. **Project context/issues** → Use Linear MCP
 4. **General web search** → Use WebSearch as last resort
 
+## TypeScript Conventions
+
+### Type vs Interface
+
+**Default to `type` for all type definitions** unless you specifically need interface-only features (declaration merging, complex OOP patterns).
+
+**Rationale:**
+- More flexible: supports unions, intersections, mapped types, primitives
+- More concise for complex types
+- Consistent with modern TypeScript best practices
+- Matches existing codebase patterns (see `apps/web/lib/validations/user-schemas.ts`)
+
+**Use `type` for:**
+```typescript
+// Object shapes (default)
+type ButtonProps = {
+  href: string;
+  children: React.ReactNode;
+  variant?: "primary" | "secondary";
+};
+
+// Union types
+type Status = "pending" | "completed" | "failed";
+
+// Intersection types
+type Enhanced = BaseProps & { extra: string };
+
+// Function types
+type Handler = (data: string) => void;
+```
+
+**Use `interface` only when:**
+```typescript
+// Declaration merging is required (rare)
+interface Window {
+  customProperty: string;
+}
+
+// Extending multiple interfaces in complex OOP (rare in React)
+interface Dog extends Animal, Trainable {
+  bark(): void;
+}
+```
+
+**Note:** This project uses Biome (via Ultracite) for linting. The `useImportType` rule is disabled in `biome.jsonc` to allow flexible type imports.
+
 ## Important Notes
 
 - React Compiler is enabled - avoid manual memoization unless necessary

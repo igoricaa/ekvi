@@ -4,8 +4,12 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --color-black: var(--black);
+  --color-primary: var(--primary);
+  --color-primary-hex: var(--primary-hex);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -32,7 +36,6 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -44,14 +47,18 @@
 }
 
 :root {
+  --green-main: oklch(0.8414 0.197053 157.656); /* #09f097; */
+  --black: oklch(0.1595 0.0021 286.16); /* #0d0d0e; */
+
+  --primary: var(--green-main);
+  --background: var(--black);
+  --foreground: #fff;
+
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);

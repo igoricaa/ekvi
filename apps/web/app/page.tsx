@@ -1,10 +1,10 @@
 "use client";
 
-import { buttonVariants } from "@/components/ui/button";
 import { useConvexAuth } from "convex/react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { useEffect } from "react";
+import { buttonVariants } from "@/components/ui/button";
 
 export default function Home() {
   const { isAuthenticated } = useConvexAuth();
