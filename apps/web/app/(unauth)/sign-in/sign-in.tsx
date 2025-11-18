@@ -29,6 +29,7 @@ import {
   type SignInFormValues,
   signInSchema,
 } from "@/lib/validations/user-schemas";
+import { getAuthErrorMessage } from "@/lib/auth-error-messages";
 
 export default function SignIn() {
   const router = useRouter();
@@ -63,7 +64,23 @@ export default function SignIn() {
         },
         onError: (ctx) => {
           setLoading(false);
-          toast.error(ctx.error.message);
+
+          const { message, showFieldErrors, fieldMessage } =
+            getAuthErrorMessage(ctx.error.status, ctx.error.message);
+
+          toast.error(message);
+
+          // Show visual feedback on form fields only for auth failures
+          if (showFieldErrors && fieldMessage) {
+            form.setError("email", {
+              type: "manual",
+              message: fieldMessage,
+            });
+            form.setError("password", {
+              type: "manual",
+              message: fieldMessage,
+            });
+          }
         },
       }
     );
