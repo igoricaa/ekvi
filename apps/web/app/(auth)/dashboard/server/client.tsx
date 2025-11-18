@@ -3,7 +3,7 @@
 import { api } from "@convex/_generated/api";
 import { Preloaded, useConvexAuth, usePreloadedQuery } from "convex/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { SignOutButton } from "@/components/client";
 import { UserProfile as UserProfileComponent } from "@/components/server";
 import { authClient } from "@/lib/auth-client";
@@ -23,22 +23,27 @@ export const UserProfile = ({
 }: {
   preloadedUserQuery: Preloaded<typeof api.profiles.getCurrentUser>;
 }) => {
+  const router = useRouter();
   const { isLoading } = useConvexAuth();
   const user = usePreloadedQuery(preloadedUserQuery);
-  const [currentUser, setCurrentUser] = useState(user);
 
   useEffect(() => {
-    if (!isLoading) {
-      setCurrentUser(user);
+    if (!isLoading && user === null) {
+      authClient.signOut();
+      router.push("/sign-in");
     }
-  }, [user, isLoading]);
+  }, [user, isLoading, router]);
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <UserProfileComponent
       user={{
-        name: currentUser.authUser.name,
-        image: currentUser.profile?.profileImage,
-        email: currentUser.authUser.email,
+        name: user.authUser.name,
+        image: user.profile?.profileImage,
+        email: user.authUser.email,
       }}
     />
   );

@@ -32,6 +32,14 @@ export const createAuth = (
     },
     baseURL: siteUrl,
     database: authComponent.adapter(ctx),
+    session: {
+      expiresIn: 60 * 60 * 24 * 7, // 7 days
+      updateAge: 60 * 60 * 24, // Refresh every 24 hours
+      cookieCache: {
+        enabled: true,
+        maxAge: 5 * 60, // 5 minutes
+      },
+    },
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: true,
@@ -44,10 +52,11 @@ export const createAuth = (
       },
     },
     emailVerification: {
-      sendVerificationEmail: async ({ user, url }) => {
+      autoSignInAfterVerification: true,
+      sendVerificationEmail: async ({ user, token }) => {
         await sendEmailVerification(requireActionCtx(ctx), {
           to: user.email,
-          url,
+          token,
         });
       },
       verificationTokenExpiresIn: 86_400, // 24 hours in seconds

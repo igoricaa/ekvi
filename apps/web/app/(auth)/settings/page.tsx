@@ -111,6 +111,14 @@ export default function SettingsPage() {
     }
   }, [currentUser, form]);
 
+  // Handle expired session
+  useEffect(() => {
+    if (currentUser === null) {
+      authClient.signOut();
+      router.push("/sign-in");
+    }
+  }, [currentUser, router]);
+
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {

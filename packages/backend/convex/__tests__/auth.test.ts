@@ -216,8 +216,9 @@ describe("Profile Management", () => {
 
       const result = await asNewUser.query(api.profiles.getCurrentUser, {});
 
-      expect(result.profile).toBeNull();
-      expect(result.authUser).toMatchObject({
+      expect(result).not.toBeNull();
+      expect(result?.profile).toBeNull();
+      expect(result?.authUser).toMatchObject({
         email: "new@example.com",
         hasCompletedOnboarding: false,
       });
@@ -608,9 +609,10 @@ describe("Edge Cases & Error Handling", () => {
       needImageUrl: false,
     });
 
-    expect(profile.profile?.bio).toBe("Updated bio only");
-    expect(profile.profile?.displayName).toBe("Original");
-    expect(profile.profile?.location).toBe("Original location");
+    expect(profile).not.toBeNull();
+    expect(profile?.profile?.bio).toBe("Updated bio only");
+    expect(profile?.profile?.displayName).toBe("Original");
+    expect(profile?.profile?.location).toBe("Original location");
   });
 
   it("should return null for non-existent profile by ID", async () => {

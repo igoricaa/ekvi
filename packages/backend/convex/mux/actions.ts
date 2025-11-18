@@ -128,9 +128,15 @@ export const createDirectUpload = action({
     ctx,
     args
   ): Promise<{ uploadUrl: string; videoId: any; muxUploadId: string }> => {
-    const { profile } = await ctx.runQuery(api.profiles.getCurrentUser, {
+    const result = await ctx.runQuery(api.profiles.getCurrentUser, {
       needImageUrl: false,
     });
+
+    if (!result) {
+      throw new Error("Authentication required");
+    }
+
+    const { profile } = result;
 
     if (!profile) {
       throw new Error("Profile not found - complete onboarding first");

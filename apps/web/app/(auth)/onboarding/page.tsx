@@ -4,10 +4,11 @@ import { api } from "@convex/_generated/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "convex/react";
 import { Dumbbell, User } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -34,6 +35,7 @@ import {
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const currentUser = useQuery(api.profiles.getCurrentUser, {
     needImageUrl: false,
   });
@@ -51,7 +53,7 @@ export default function OnboardingPage() {
     },
   });
 
-  // Check if user has already completed onboarding
+  // Check if user exists and has already completed onboarding
   useEffect(() => {
     if (currentUser?.profile) {
       router.push("/dashboard/server");
@@ -64,6 +66,17 @@ export default function OnboardingPage() {
       form.setValue("displayName", currentUser.authUser.name);
     }
   }, [currentUser, form]);
+
+  // Show success toast if redirected from email verification
+  useEffect(() => {
+    const verified = searchParams.get("verified");
+    if (verified === "true") {
+      toast.success("Welcome! Your email has been verified. ✓");
+      // Clean up URL without reloading
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, "", newUrl);
+    }
+  }, [searchParams]);
 
   const onSubmit = async (data: OnboardingFormValues) => {
     try {

@@ -34,8 +34,11 @@ export async function getCurrentUserProfile(ctx: QueryCtx | MutationCtx) {
 export const getCurrentUser = query({
   args: { needImageUrl: v.optional(v.boolean()) },
   handler: async (ctx, args) => {
-    // TODO: proveri šta authUser vraća kada ne postoji authUser, da li vraća null
-    const authUser = await authComponent.getAuthUser(ctx);
+    const authUser = await authComponent.safeGetAuthUser(ctx);
+    
+    if (!authUser) {
+      return null;
+    }
 
     const profile = await ctx.db
       .query("userProfiles")

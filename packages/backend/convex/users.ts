@@ -35,7 +35,6 @@ export const listSessions = query({
   args: {},
   handler: async (ctx) => {
     const _user = await authComponent.getAuthUser(ctx);
-    console.log(_user);
     const { auth, headers } = await authComponent.getAuth(createAuth, ctx);
     return auth.api.listSessions({ headers });
   },
