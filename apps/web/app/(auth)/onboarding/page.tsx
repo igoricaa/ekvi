@@ -55,6 +55,10 @@ export default function OnboardingPage() {
 
   // Check if user exists and has already completed onboarding
   useEffect(() => {
+    if (currentUser === null) {
+      authClient.signOut();
+      router.push("/sign-in");
+    }
     if (currentUser?.profile) {
       router.push("/dashboard/server");
     }
