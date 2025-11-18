@@ -12,7 +12,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -82,6 +81,9 @@ export default function SignUp() {
         },
         onSuccess: () => {
           setLoading(false);
+          toast.success(
+            "Account created! Check your email to verify your account."
+          );
           router.push("/sign-in");
         },
         onError: (ctx) => {
@@ -266,13 +268,13 @@ export default function SignUp() {
           </form>
         </Form>
       </CardContent>
-      <CardFooter>
+      {/* <CardFooter>
         <div className="flex justify-center w-full border-t py-4">
           <p className="text-center text-xs text-neutral-500">
             Secured by <span className="text-orange-400">better-auth.</span>
           </p>
         </div>
-      </CardFooter>
+      </CardFooter> */}
     </Card>
   );
 }
