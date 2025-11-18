@@ -25,7 +25,7 @@ export function VerifyEmailContent() {
     token ? "loading" : "invalid"
   );
   const [errorMessage, setErrorMessage] = useState("");
-  const [countdown, setCountdown] = useState(2);
+  const [countdown, setCountdown] = useState(3);
 
   // Verify email on mount
   useEffect(() => {
@@ -46,9 +46,9 @@ export function VerifyEmailContent() {
         }
 
         setState("success");
-      } catch {
+      } catch (error) {
         setState("error");
-        setErrorMessage("An unexpected error occurred");
+        setErrorMessage(`An unexpected error occurred: ${error}`);
       }
     };
 

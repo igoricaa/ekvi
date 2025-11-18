@@ -11,7 +11,7 @@ import ResetPasswordEmailTemplate from "./emails/components/resetPassword";
 import VerifyEmailTemplate from "./emails/components/verifyEmail";
 
 export const resend = new Resend(components.resend, {
-  testMode: true,
+  testMode: false,
 });
 
 // export const sendTestEmail = internalMutation({
@@ -29,17 +29,20 @@ export const sendEmailVerification = async (
   ctx: ActionCtx,
   {
     to,
-    url,
+    token,
   }: {
     to: string;
-    url: string;
+    token: string;
   }
 ) => {
+  const siteUrl = process.env.SITE_URL || "http://localhost:3001";
+  const verificationUrl = `${siteUrl}/api/auth/verify-email?token=${token}&callbackURL=/onboarding?verified=true`;
+
   await resend.sendEmail(ctx, {
     from: "EKVI <noreply@ekvilibrijum.rs>",
     to,
     subject: "Verify your email address",
-    html: await render(<VerifyEmailTemplate verificationUrl={url} />),
+    html: await render(<VerifyEmailTemplate verificationUrl={verificationUrl} />),
   });
 };
 
