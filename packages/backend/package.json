@@ -11,7 +11,8 @@
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
     "test:coverage": "vitest run --coverage --coverage.reporter=text",
     "test:watch": "vitest --watch",
-    "email": "email dev --dir convex/emails"
+    "email": "email dev --dir convex/emails",
+    "clean-users": "ts-node scripts/clean-users.ts"
   },
   "dependencies": {
     "@convex-dev/resend": "^0.1.13",

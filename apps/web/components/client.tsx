@@ -1,6 +1,7 @@
 import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+// TODO: izbrisi?
 export function SignOutButton({ onClick }: { onClick: () => any }) {
   return (
     <Button variant="ghost" size="sm" onClick={onClick}>

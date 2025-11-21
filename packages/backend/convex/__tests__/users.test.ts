@@ -74,7 +74,7 @@ describe("User Operations", () => {
 
       // Revoke the session
       await asUser.mutation(api.users.revokeSession, {
-        sessionToken: sessionToken!,
+        sessionToken: sessionToken ?? "",
       });
 
       // Verify session was revoked (deleted from database)
@@ -291,12 +291,11 @@ describe("User Operations", () => {
       const t = setupConvexTest();
 
       // Create user WITHOUT profile (hasn't completed onboarding)
-      const { asUser: asUserNoProfile, userId: userAuthId } =
-        await createAuthenticatedTestUser(t, {
-          email: "no-profile@example.com",
-          name: "No Profile User",
-          hasCompletedOnboarding: false, // No profile created
-        });
+      const { asUser: asUserNoProfile } = await createAuthenticatedTestUser(t, {
+        email: "no-profile@example.com",
+        name: "No Profile User",
+        hasCompletedOnboarding: false, // No profile created
+      });
 
       const { userId: targetUserId } = await createAuthenticatedTestUser(t, {
         email: "target5@example.com",
@@ -548,7 +547,7 @@ describe("User Operations", () => {
       // Better Auth should validate that the session belongs to the authenticated user
       await expect(
         attacker.mutation(api.users.revokeSession, {
-          sessionToken: session1Token!,
+          sessionToken: session1Token ?? "",
         })
       ).rejects.toThrow();
       // Better Auth enforces session ownership

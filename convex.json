@@ -1,9 +1,7 @@
 {
   "functions": "packages/backend/convex/",
   "node": {
-    "externalPackages": [
-      "@mux/mux-node"
-    ]
+    "externalPackages": ["@mux/mux-node"]
   },
   "codegen": {
     "fileType": "ts"

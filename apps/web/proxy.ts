@@ -25,7 +25,7 @@ export function proxy(request: NextRequest) {
   }
 
   if (pathname === "/" && sessionCookie) {
-    return NextResponse.redirect(new URL("/dashboard/server", request.url));
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   // if (sessionCookie && (isPublicRoute || pathname === "/")) {

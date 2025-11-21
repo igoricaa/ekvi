@@ -42,7 +42,9 @@ export const sendEmailVerification = async (
     from: "EKVI <noreply@ekvilibrijum.rs>",
     to,
     subject: "Verify your email address",
-    html: await render(<VerifyEmailTemplate verificationUrl={verificationUrl} />),
+    html: await render(
+      <VerifyEmailTemplate verificationUrl={verificationUrl} />
+    ),
   });
 };
 

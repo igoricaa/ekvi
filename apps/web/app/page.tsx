@@ -11,7 +11,7 @@ export default function Home() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      redirect("/dashboard/server");
+      redirect("/dashboard");
     }
   }, [isAuthenticated]);
 

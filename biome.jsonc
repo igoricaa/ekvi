@@ -1,10 +1,20 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "extends": ["ultracite/core", "ultracite/react", "ultracite/next"],
+  "files": {
+    "includes": [
+      "**",
+      "!apps/web/components/ui",
+      "!packages/backend/convex/_generated",
+      "!packages/backend/convex/betterAuth/_generated"
+    ]
+  },
   "linter": {
     "rules": {
       "style": {
-        "useImportType": "off"
+        "useImportType": "off",
+        "noNestedTernary": "off",
+        "useFilenamingConvention": "off"
       },
       "nursery": {
         "useConsistentArrowReturn": "off",
@@ -13,7 +23,8 @@
       },
       "suspicious": {
         "noConsole": "off",
-        "noExplicitAny": "off"
+        "noExplicitAny": "off",
+        "noSkippedTests": "off"
       },
       "performance": {
         "noNamespaceImport": "off",

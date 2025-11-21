@@ -30,7 +30,7 @@ import {
 } from "@/lib/validations/user-schemas";
 
 export default function Verify2FAPage() {
-  const router = useRouter();
+  const _router = useRouter();
   const [loading, setLoading] = useState(false);
 
   const form = useForm<TwoFactorFormValues>({
@@ -40,7 +40,7 @@ export default function Verify2FAPage() {
     },
   });
 
-  const onSubmit = async (data: TwoFactorFormValues) => {
+  const onSubmit = async (_data: TwoFactorFormValues) => {
     setLoading(true);
     try {
       // Better Auth doesn't expose 2FA methods directly via convex plugin

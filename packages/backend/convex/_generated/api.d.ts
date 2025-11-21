@@ -10,6 +10,7 @@
 
 import type * as __tests___helpers from "../__tests__/helpers.js";
 import type * as __tests___setup from "../__tests__/setup.js";
+import type * as admin from "../admin.js";
 import type * as auth from "../auth.js";
 import type * as crons from "../crons.js";
 import type * as email from "../email.js";
@@ -41,6 +42,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   "__tests__/helpers": typeof __tests___helpers;
   "__tests__/setup": typeof __tests___setup;
+  admin: typeof admin;
   auth: typeof auth;
   crons: typeof crons;
   email: typeof email;
