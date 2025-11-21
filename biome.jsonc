@@ -6,7 +6,9 @@
       "**",
       "!apps/web/components/ui",
       "!packages/backend/convex/_generated",
-      "!packages/backend/convex/betterAuth/_generated"
+      "!packages/backend/convex/betterAuth/_generated",
+      "!packages/backend/scripts",
+      "!packages/backend/convex/admin.ts"
     ]
   },
   "linter": {

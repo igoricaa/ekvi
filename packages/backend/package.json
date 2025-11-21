@@ -12,7 +12,7 @@
     "test:coverage": "vitest run --coverage --coverage.reporter=text",
     "test:watch": "vitest --watch",
     "email": "email dev --dir convex/emails",
-    "clean-users": "ts-node scripts/clean-users.ts"
+    "clean-users": "npx tsx scripts/clean-users.ts"
   },
   "dependencies": {
     "@convex-dev/resend": "^0.1.13",

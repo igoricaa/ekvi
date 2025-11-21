@@ -82,9 +82,9 @@ export default function SignUp() {
         onSuccess: () => {
           setLoading(false);
           toast.success(
-            "Account created! Check your email to verify your account."
+            "Account created! We've sent a verification email to your inbox."
           );
-          router.push("/sign-in");
+          router.push("/onboarding");
         },
         onError: (ctx) => {
           setLoading(false);

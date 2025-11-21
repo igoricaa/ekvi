@@ -4,19 +4,19 @@ import { api } from "@convex/_generated/api";
 import { Preloaded, useConvexAuth, usePreloadedQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { SignOutButton } from "@/components/client";
+// import { SignOutButton } from "@/components/client";
 import { UserProfile as UserProfileComponent } from "@/components/server";
 import { authClient } from "@/lib/auth-client";
 
-export function SignOut() {
-  const router = useRouter();
+// export function SignOut() {
+//   const router = useRouter();
 
-  const handleSignOut = async () => {
-    await authClient.signOut();
-    router.push("/sign-in");
-  };
-  return <SignOutButton onClick={handleSignOut} />;
-}
+//   const handleSignOut = async () => {
+//     await authClient.signOut();
+//     router.push("/sign-in");
+//   };
+//   return <SignOutButton onClick={handleSignOut} />;
+// }
 
 export const UserProfile = ({
   preloadedUserQuery,

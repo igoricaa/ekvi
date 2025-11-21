@@ -1,7 +1,5 @@
-import { Settings } from "lucide-react";
 import Image from "next/image";
 import { PropsWithChildren } from "react";
-import { Button } from "./ui/button";
 
 export const UserProfile = ({
   user,
@@ -33,34 +31,32 @@ export const UserProfile = ({
 };
 
 export const AppContainer = ({ children }: PropsWithChildren) => {
-  return <div className="min-h-screen w-full p-4 space-y-8">{children}</div>;
+  return <main className="min-h-screen w-full p-4 space-y-8">{children}</main>;
 };
 
-export const AppHeader = ({ children }: PropsWithChildren) => {
-  return (
-    <header className="flex items-center justify-between max-w-2xl mx-auto">
-      {children}
-    </header>
-  );
-};
+// export const AppHeader = ({ children }: PropsWithChildren) => {
+//   return (
+//     <header className="flex items-center justify-between">{children}</header>
+//   );
+// };
 
-export const AppNav = ({ children }: PropsWithChildren) => {
-  return <div className="flex items-center gap-2">{children}</div>;
-};
+// export const AppNav = ({ children }: PropsWithChildren) => {
+//   return <div className="flex items-center gap-2">{children}</div>;
+// };
 
-export const SettingsButton = ({ children }: PropsWithChildren) => {
-  return (
-    <Button variant="ghost" size="sm" asChild>
-      {children}
-    </Button>
-  );
-};
+// export const SettingsButton = ({ children }: PropsWithChildren) => {
+//   return (
+//     <Button variant="ghost" size="sm" asChild>
+//       {children}
+//     </Button>
+//   );
+// };
 
-export const SettingsButtonContent = () => {
-  return (
-    <div className="flex items-center gap-2">
-      <Settings size={16} />
-      Settings
-    </div>
-  );
-};
+// export const SettingsButtonContent = () => {
+//   return (
+//     <div className="flex items-center gap-2">
+//       <Settings size={16} />
+//       Profil
+//     </div>
+//   );
+// };

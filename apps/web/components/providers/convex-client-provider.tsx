@@ -10,7 +10,11 @@ if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
 }
 
 const convex = new ConvexReactClient(
-  process.env.NEXT_PUBLIC_CONVEX_URL as string
+  process.env.NEXT_PUBLIC_CONVEX_URL as string,
+  {
+    verbose: false,
+    expectAuth: true,
+  }
 );
 
 export function ConvexClientProvider({ children }: { children: ReactNode }) {
