@@ -4,6 +4,7 @@ import { requireActionCtx } from "@convex-dev/better-auth/utils";
 import { betterAuth } from "better-auth";
 import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
+import { action } from "./_generated/server";
 import authSchema from "./betterAuth/schema";
 import { sendEmailVerification, sendResetPassword } from "./email";
 
@@ -42,8 +43,7 @@ export const createAuth = (
     },
     emailAndPassword: {
       enabled: true,
-      requireEmailVerification: true,
-      sendOnSignUp: true,
+      requireEmailVerification: false,
       sendResetPassword: async ({ user, url }) => {
         await sendResetPassword(requireActionCtx(ctx), {
           to: user.email,
@@ -52,6 +52,7 @@ export const createAuth = (
       },
     },
     emailVerification: {
+      sendOnSignUp: true,
       autoSignInAfterVerification: true,
       sendVerificationEmail: async ({ user, token }) => {
         await sendEmailVerification(requireActionCtx(ctx), {
@@ -106,3 +107,57 @@ export const createAuth = (
 //     return authComponent.getAuthUser(ctx);
 //   },
 // });
+
+// Generate a random token for verification
+function generateToken(length: number): string {
+  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+  let result = "";
+  const randomValues = new Uint8Array(length);
+  crypto.getRandomValues(randomValues);
+  for (let i = 0; i < length; i++) {
+    result += chars[randomValues[i] % chars.length];
+  }
+  return result;
+}
+
+// Resend verification email to the current user
+export const resendVerificationEmail = action({
+  args: {},
+  handler: async (ctx) => {
+    const authUser = await authComponent.getAuthUser(ctx);
+
+    if (!authUser) {
+      throw new Error("Not authenticated");
+    }
+
+    if (authUser.emailVerified) {
+      throw new Error("Email already verified");
+    }
+
+    // Generate a new verification token
+    const token = generateToken(32);
+    const expiresAt = Date.now() + 86_400 * 1000; // 24 hours
+
+    // Store the verification token
+    await ctx.runMutation(components.betterAuth.adapter.create, {
+      input: {
+        model: "verification",
+        data: {
+          identifier: authUser.email,
+          value: token,
+          expiresAt,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        },
+      },
+    });
+
+    // Send the verification email
+    await sendEmailVerification(ctx, {
+      to: authUser.email,
+      token,
+    });
+
+    return { success: true };
+  },
+});

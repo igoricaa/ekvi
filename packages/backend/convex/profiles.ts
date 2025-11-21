@@ -35,7 +35,7 @@ export const getCurrentUser = query({
   args: { needImageUrl: v.optional(v.boolean()) },
   handler: async (ctx, args) => {
     const authUser = await authComponent.safeGetAuthUser(ctx);
-    
+
     if (!authUser) {
       return null;
     }
@@ -52,6 +52,7 @@ export const getCurrentUser = query({
           _id: authUser._id,
           email: authUser.email,
           name: authUser.name,
+          emailVerified: authUser.emailVerified,
           hasCompletedOnboarding: authUser.hasCompletedOnboarding,
         },
         profile: null,
@@ -69,6 +70,7 @@ export const getCurrentUser = query({
         _id: authUser._id,
         email: authUser.email,
         name: authUser.name,
+        emailVerified: authUser.emailVerified,
         hasCompletedOnboarding: authUser.hasCompletedOnboarding,
       },
       profile: {
